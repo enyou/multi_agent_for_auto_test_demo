@@ -1,111 +1,103 @@
+
 import json
-from typing import Any, List, TypedDict
 from langgraph.graph import StateGraph, END, START
 from langchain_core.output_parsers import JsonOutputParser
-from utils.llm_client import llm_client
 import requirement_analyzer_agent.schemas as schema
-from requirement_analyzer_agent.prompts import *
-from typing import Annotated
+from requirement_analyzer_agent.prompts import ExtractFeaturePrompt,CommonUserPrompt,\
+ExtractApiPrompt, ExtractFlowPrompt, ExtractRulePrompt
+from utils.llm_client import llm_client
+from state import GlobalState
 from utils.tools import make_id
 
 
-def append_reducer(old_list: List[Any], new_items: Any) -> List[Any]:
-    """将新内容追加到列表的合并函数"""
-    if old_list is None:
-        old_list = []
-    if new_items is None:
-        return old_list
-    # 如果新内容本身是列表，则扩展
-    if isinstance(new_items, list):
-        if old_list:
-            return old_list + new_items
-        return new_items
-    # 否则作为单个元素追加
-    if old_list:
-        return old_list + [new_items]
-    return [new_items]
 
 
-class TRMState(TypedDict):
-    requirement_text: str
-    ext_features: Annotated[List[Any], append_reducer]
-    ext_apis: Annotated[List[Any], append_reducer]
-    ext_flows: Annotated[List[Any], append_reducer]
-    ext_rules: Annotated[List[Any], append_reducer]
-    ext_exceptions: Annotated[List[Any], append_reducer]
-    feature_id: str
-    trm_result: dict
-
-
-def extract_feature_node(state: TRMState):
-    input = state["requirement_text"]
+def extract_feature_node(state: GlobalState):
+    """提取feature信息节点"""
+    user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.FeatureSchema)
     resp = llm_client.run_prompt(system_prompt=ExtractFeaturePrompt.system_prompt,
                                  user_prompt=CommonUserPrompt.prompt,
-                                 input={"fragment": input},
+                                 input={"fragment": user_input},
                                  parser=parser)
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    return {"ext_features": result}
+    requirement = state.get("requirements").copy()
+    requirement["ext_features"]=result
+    return {"requirements": requirement}
 
 
-def extract_api_node(state: TRMState) -> TRMState:
-    input = state["requirement_text"]
+def extract_api_node(state: GlobalState) -> GlobalState:
+    """提取api信息节点"""
+    user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.ApiSchema)
     resp = llm_client.run_prompt(system_prompt=ExtractApiPrompt.system_prompt,
                                  user_prompt=CommonUserPrompt.prompt,
-                                 input={"fragment": input},
+                                 input={"fragment": user_input},
                                  parser=parser)
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
+    requirement = state.get("requirements").copy()
+    requirement["ext_apis"]=result
+    return {"requirements": requirement}
 
-    return {"ext_apis": result}
 
-
-def extract_flow_node(state: TRMState) -> TRMState:
-    input = state["requirement_text"]
+def extract_flow_node(state: GlobalState) -> GlobalState:
+    """提取flow信息节点"""
+    user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.FlowSchema)
     resp = llm_client.run_prompt(system_prompt=ExtractFlowPrompt.system_prompt,
                                  user_prompt=CommonUserPrompt.prompt,
-                                 input={"fragment": input},
+                                 input={"fragment": user_input},
                                  parser=parser)
 
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    return {"ext_flows": result}
+    requirement = state.get("requirements").copy()
+    requirement["ext_flows"]=result
+    return {"requirements": requirement}
 
 
-def extract_rule_node(state: TRMState) -> TRMState:
-    input = state["requirement_text"]
+def extract_rule_node(state: GlobalState) -> GlobalState:
+    """提取rule信息节点"""
+    user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.RuleSchema)
     resp = llm_client.run_prompt(system_prompt=ExtractRulePrompt.system_prompt,
                                  user_prompt=CommonUserPrompt.prompt,
-                                 input={"fragment": input},
+                                 input={"fragment": user_input},
                                  parser=parser)
 
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    return {"ext_rules": result}
+
+    requirement = state.get("requirements").copy()
+    requirement["ext_rules"]=result
+    return {"requirements": requirement}
 
 
-def extract_exception_node(state: TRMState) -> TRMState:
-    return state
+def extract_exception_node(state: GlobalState) -> GlobalState:
+    """提取exception信息节点"""
+    print(state.get("requirements"))
+    requirement = state.get("requirements").copy()
+    requirement["ext_exceptions"]=[]
+    return {"requirements": requirement}
 
 
-def collect_result_node(state: TRMState) -> TRMState:
+
+def collect_result_node(state: GlobalState) -> GlobalState:
     """
-    合并抽取的feature, api, flow, rule, exception信息, 生成TRM
+        合并抽取的feature, api, flow, rule, exception信息, 生成TRM
     """
     print("start to collect")
-    feature_id = state["feature_id"]
-    features = state["ext_features"]
-    flows = state["ext_flows"]
-    rules = state["ext_rules"]
-    apis = state["ext_apis"]
+    feature_id = state["requirements"]["feature_id"]
+    features = state["requirements"]["ext_features"]
+    flows = state["requirements"]["ext_flows"]
+    rules = state["requirements"]["ext_rules"]
+    apis = state["requirements"]["ext_apis"]
     feat_list = []
     for f in features:
         feat_list.append({"id": feature_id, "name": f.get("feature") or f.get(
@@ -126,7 +118,8 @@ def collect_result_node(state: TRMState) -> TRMState:
     for r in rules:
         rule_list.append({"feature_id": feature_id, "rule_id": make_id("R"), "text": r.get(
             "text"), "type": r.get("type", "input_validation"), "normalized": r.get("normalized", "")})
-
+    
+    
     return {"trm_result": {
         "features": feat_list,
         "flows": flow_list,
@@ -140,7 +133,7 @@ def create_graph():
     """创建并运行简单的并行图"""
     print("开始创建图")
     # 创建图
-    workflow = StateGraph(TRMState)
+    workflow = StateGraph(GlobalState)
 
     # 添加节点
     workflow.add_node("ext_feature_task", extract_feature_node)
@@ -177,13 +170,14 @@ def create_graph():
     return graph
 
 
-def run_graph(input):
+def run_graph(user_input):
+    """run"""
     print("=" * 50)
     print("LangGraph并行执行开始")
     print("=" * 50)
     # 创建初始状态
-    initial_state = TRMState(
-        requirement_text=input,
+    initial_state = GlobalState(
+        requirement_text=user_input,
         ext_features=[],
         ext_apis=[],
         ext_flows=[],
