@@ -1,19 +1,17 @@
 import json
-import os
-from typing import TypedDict
 from datetime import datetime
 from langgraph.graph import StateGraph, END, START
-from langchain_core.output_parsers import JsonOutputParser, StrOutputParser
+from langchain_core.output_parsers import JsonOutputParser
+from state import GlobalState
 from utils.llm_client import llm_client
 from gen_test_code_agent.prompts import UITestCaseStructuredPrompt, UITestCaseToCodePrompt
 from gen_test_code_agent import schemas
-from get_selector_from_html import run as extract_selectors
+from gen_test_code_agent.get_selector_from_html import run as extract_selectors
 
 
-class GenTestCodeState(TypedDict):
-    url: str
-    test_type: str
-    test_case: str
+
+class GenTestCodeState(GlobalState):
+    """状态定义"""
     structured_test_case: str
     page_selector: str
     test_code: str
@@ -24,13 +22,12 @@ def structuring_test_case_node(state: GenTestCodeState):
         将自然语言的测试case转化为结构化的测试case
     """
     print("将自然语言的测试case转化为结构化的测试case")
-    nlp_test_case = state["test_case"]
+    nlp_test_case = state["test_case_result"]
     parser = JsonOutputParser(pydantic_object=schemas.UITestCaseSchema)
     resp = llm_client.run_prompt(system_prompt=UITestCaseStructuredPrompt.sys_prompt,
                                  user_prompt=UITestCaseStructuredPrompt.user_prompt,
                                  input={"case": nlp_test_case},
                                  parser=parser)
-    print(111111, resp)
     if not isinstance(resp, str):
         return {"structured_test_case": json.dumps(resp)}
     return {"structured_test_case": resp}
@@ -43,6 +40,7 @@ def get_selectors_node(state: GenTestCodeState):
 
 
 def create_test_code_node(state: GenTestCodeState):
+    """生成测试代码"""
     resp = llm_client.run_prompt(system_prompt=UITestCaseToCodePrompt.system_prompt,
                                  user_prompt=UITestCaseToCodePrompt.user_prompt,
                                  input={"case": state["structured_test_case"],
