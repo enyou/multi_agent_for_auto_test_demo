@@ -107,7 +107,7 @@ class GlobalState(TypedDict):
     fragment: str
     doc_parser_result: Optional[Dict[str, Any]]
     test_case_result: Optional[List[Any]]
-    test_code: Optional[List[Any]]
+    test_code_refs: Optional[List[Any]]
     execution_result: Optional[List[Any]]
     report: Optional[Dict[str, Any]]
     bugs: Optional[List[Bug]]

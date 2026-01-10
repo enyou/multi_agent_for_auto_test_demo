@@ -6,7 +6,7 @@ from langchain_core.output_parsers import JsonOutputParser
 from utils.llm_client import llm_client
 from gen_test_case_agent.prompts import TestCaseCreatePrompt
 from gen_test_case_agent import schemas
-from state import GlobalState
+
 
 class TestCase(TypedDict):
     """
@@ -21,15 +21,18 @@ class TestCase(TypedDict):
     expected_results: str
     priority: str
 
+
 class TestCaseState(TypedDict):
     """状态定义"""
+    feature_id: str
     trm_result: Dict[str, Any]
     test_case_result: Optional[List[TestCase]]
+
 
 def create(state: TestCaseState):
     """ create test case"""
     print("creating")
-    trm_text = json.dumps(state["doc_parser_result"])
+    trm_text = json.dumps(state["trm_result"])
     parser = JsonOutputParser(pydantic_object=schemas.TestSchema)
     resp = llm_client.run_prompt(system_prompt=TestCaseCreatePrompt.system_prompt,
                                  user_prompt=TestCaseCreatePrompt.user_prompt,
@@ -41,7 +44,7 @@ def create(state: TestCaseState):
     return {"test_case_result": result}
 
 
-def save(state: GlobalState):
+def save(state: TestCaseState):
     """ save to json"""
     print("saving test case")
     feature_id = state["feature_id"]
@@ -55,7 +58,7 @@ def create_graph():
     """创建并运行简单的并行图"""
     print("开始创建图")
     # 创建图
-    workflow = StateGraph(GlobalState)
+    workflow = StateGraph(TestCaseState)
 
     # 添加节点
     workflow.add_node("create_task", create)

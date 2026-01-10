@@ -7,19 +7,31 @@ from requirement_analyzer_agent.agent import create_graph as trm_create_agent
 
 def trm_create_node(state: GlobalState):
     """需求解析节点"""
+    print("需求解析节点")
     result = trm_create_agent().invoke({"feature_id": state["feature_id"],
                                         "fragment": state["fragment"]})
-    return {"doc_parser_result": result}
+    print("需求解析节点:", type(result), result)
+    return {"doc_parser_result": result["trm_result"]}
 
 
 def test_case_create_node(state: GlobalState):
     """生成测试用例节点"""
-    return test_case_create_agent().invoke(state)
+    print("生成测试用例节点")
+    result = test_case_create_agent().invoke(
+        {"trm_result": state["doc_parser_result"], "feature_id": state["feature_id"]})
+    return {"test_case_result": result["test_case_result"]}
 
 
 def test_code_create_node(state: GlobalState):
     """生成代码节点"""
-    return test_code_create_agent().invoke(state)
+    print("生成代码节点")
+    init_state = {
+        "url": "http://localhost:5173/login",
+        "test_case_result": state["test_case_result"]
+    }
+    resp = test_code_create_agent().invoke(init_state)
+    print(resp)
+    return {"test_code_refs": resp["test_code_refs"]}
 
 
 def create_graph():
@@ -55,9 +67,9 @@ def run(user_input: str):
     initial_state = {
         "feature_id": "123",
         "fragment": user_input,
-        "requirements": {},
-        "test_cases": None,
-        "test_code": None,
+        "doc_parer_result": {},
+        "test_case_result": [],
+        "test_code_refs": [],
         "execution_result": None,
         "report": None,
         "bugs": [],
@@ -87,8 +99,8 @@ if __name__ == "__main__":
             # 登录与用户管理模块需求说明
 
             ## 1. 用户登录功能
-            用户可以在登录页面输入手机号与密码进行登录。
-            - 手机号必须为 11 位数字。
+            用户可以在登录页面输入用户名与密码进行登录。
+            - 用户名必须为 11 位数字。
             - 密码需至少 8 位，并且包含数字与字母。
             - 若密码错误次数超过 5 次，则账号锁定 10 分钟。
 

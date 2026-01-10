@@ -23,7 +23,8 @@ class DocParserState(TypedDict):
     ext_rules: Annotated[List[Any], append_reducer]
     ext_exceptions: Annotated[List[Any], append_reducer]
     trm_result: Optional[Dict[str, Any]]
-    
+
+
 def extract_feature_node(state: DocParserState):
     """提取feature信息节点"""
     user_input = state["fragment"]
@@ -136,6 +137,7 @@ def save_node(state: DocParserState):
     file_name = f"./output/trm_docs/trm_{feature_id}_{create_date}.json"
     with open(file_name, 'w', encoding='utf-8') as f:
         json.dump(state["trm_result"], f, indent=4, ensure_ascii=False)
+    return state
 
 
 def create_graph():
@@ -174,26 +176,3 @@ def create_graph():
     graph = workflow.compile()
 
     return graph
-
-
-def run_graph(user_input):
-    """run"""
-    print("=" * 50)
-    print("LangGraph并行执行开始")
-    print("=" * 50)
-    # 创建初始状态
-    initial_state = GlobalState(
-        requirement_text=user_input,
-        ext_features=[],
-        ext_apis=[],
-        ext_flows=[],
-        ext_rules=[],
-        ext_exceptions=[],
-        feature_id=make_id("F"),
-        trm_result={}
-    )
-    graph = create_graph()
-    print("\n开始执行工作流...")
-    print("-" * 50)
-    final_state = graph.invoke(initial_state)
-    print(final_state["trm_result"])
