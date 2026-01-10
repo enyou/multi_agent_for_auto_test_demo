@@ -1,18 +1,30 @@
 
+from datetime import datetime
 import json
+from typing import Annotated, Dict, Optional, TypedDict, List, Any
 from langgraph.graph import StateGraph, END, START
 from langchain_core.output_parsers import JsonOutputParser
 import requirement_analyzer_agent.schemas as schema
-from requirement_analyzer_agent.prompts import ExtractFeaturePrompt,CommonUserPrompt,\
-ExtractApiPrompt, ExtractFlowPrompt, ExtractRulePrompt
+from requirement_analyzer_agent.prompts import ExtractFeaturePrompt, CommonUserPrompt, \
+    ExtractApiPrompt, ExtractFlowPrompt, ExtractRulePrompt
 from utils.llm_client import llm_client
-from state import GlobalState
-from utils.tools import make_id
+from utils.tools import append_reducer, make_id
 
 
-
-
-def extract_feature_node(state: GlobalState):
+class DocParserState(TypedDict):
+    """
+        doc parser state 
+    """
+    feature_id: str
+    fragment: str
+    ext_features: Dict[str, str]
+    ext_apis: Annotated[List[Any], append_reducer]
+    ext_flows: Annotated[List[Any], append_reducer]
+    ext_rules: Annotated[List[Any], append_reducer]
+    ext_exceptions: Annotated[List[Any], append_reducer]
+    trm_result: Optional[Dict[str, Any]]
+    
+def extract_feature_node(state: DocParserState):
     """提取feature信息节点"""
     user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.FeatureSchema)
@@ -23,12 +35,11 @@ def extract_feature_node(state: GlobalState):
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    requirement = state.get("requirements").copy()
-    requirement["ext_features"]=result
-    return {"requirements": requirement}
+
+    return {"ext_features": result}
 
 
-def extract_api_node(state: GlobalState) -> GlobalState:
+def extract_api_node(state: DocParserState) -> DocParserState:
     """提取api信息节点"""
     user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.ApiSchema)
@@ -39,12 +50,10 @@ def extract_api_node(state: GlobalState) -> GlobalState:
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    requirement = state.get("requirements").copy()
-    requirement["ext_apis"]=result
-    return {"requirements": requirement}
+    return {"requiremext_apisents": result}
 
 
-def extract_flow_node(state: GlobalState) -> GlobalState:
+def extract_flow_node(state: DocParserState) -> DocParserState:
     """提取flow信息节点"""
     user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.FlowSchema)
@@ -56,12 +65,10 @@ def extract_flow_node(state: GlobalState) -> GlobalState:
     result = resp
     if isinstance(resp, str):
         result = json.loads(resp)
-    requirement = state.get("requirements").copy()
-    requirement["ext_flows"]=result
-    return {"requirements": requirement}
+    return {"ext_flows": result}
 
 
-def extract_rule_node(state: GlobalState) -> GlobalState:
+def extract_rule_node(state: DocParserState) -> DocParserState:
     """提取rule信息节点"""
     user_input = state["fragment"]
     parser = JsonOutputParser(pydantic_object=schema.RuleSchema)
@@ -74,30 +81,24 @@ def extract_rule_node(state: GlobalState) -> GlobalState:
     if isinstance(resp, str):
         result = json.loads(resp)
 
-    requirement = state.get("requirements").copy()
-    requirement["ext_rules"]=result
-    return {"requirements": requirement}
+    return {"ext_rules": result}
 
 
-def extract_exception_node(state: GlobalState) -> GlobalState:
+def extract_exception_node(state: DocParserState) -> DocParserState:
     """提取exception信息节点"""
-    print(state.get("requirements"))
-    requirement = state.get("requirements").copy()
-    requirement["ext_exceptions"]=[]
-    return {"requirements": requirement}
+    return {"requiremeext_exceptionsnts": []}
 
 
-
-def collect_result_node(state: GlobalState) -> GlobalState:
+def collect_result_node(state: DocParserState) -> DocParserState:
     """
         合并抽取的feature, api, flow, rule, exception信息, 生成TRM
     """
     print("start to collect")
-    feature_id = state["requirements"]["feature_id"]
-    features = state["requirements"]["ext_features"]
-    flows = state["requirements"]["ext_flows"]
-    rules = state["requirements"]["ext_rules"]
-    apis = state["requirements"]["ext_apis"]
+    feature_id = state["feature_id"]
+    features = state["ext_features"]
+    flows = state["ext_flows"]
+    rules = state["ext_rules"]
+    apis = state["ext_apis"]
     feat_list = []
     for f in features:
         feat_list.append({"id": feature_id, "name": f.get("feature") or f.get(
@@ -118,8 +119,7 @@ def collect_result_node(state: GlobalState) -> GlobalState:
     for r in rules:
         rule_list.append({"feature_id": feature_id, "rule_id": make_id("R"), "text": r.get(
             "text"), "type": r.get("type", "input_validation"), "normalized": r.get("normalized", "")})
-    
-    
+
     return {"trm_result": {
         "features": feat_list,
         "flows": flow_list,
@@ -129,11 +129,20 @@ def collect_result_node(state: GlobalState) -> GlobalState:
     }}
 
 
+def save_node(state: DocParserState):
+    print("saving trm doc")
+    feature_id = state["feature_id"]
+    create_date = datetime.now().strftime("%Y%m%d%H%M%S")
+    file_name = f"./output/trm_docs/trm_{feature_id}_{create_date}.json"
+    with open(file_name, 'w', encoding='utf-8') as f:
+        json.dump(state["trm_result"], f, indent=4, ensure_ascii=False)
+
+
 def create_graph():
     """创建并运行简单的并行图"""
-    print("开始创建图")
+    print("开始创建图-文档分析")
     # 创建图
-    workflow = StateGraph(GlobalState)
+    workflow = StateGraph(DocParserState)
 
     # 添加节点
     workflow.add_node("ext_feature_task", extract_feature_node)
@@ -142,6 +151,7 @@ def create_graph():
     workflow.add_node("ext_rule_task", extract_rule_node)
     workflow.add_node("ext_exception_task", extract_exception_node)
     workflow.add_node("collect_result_task", collect_result_node)
+    workflow.add_node("save_task", save_node)
 
     # 并行任务
     workflow.add_edge(START, "ext_feature_task")
@@ -156,16 +166,12 @@ def create_graph():
     workflow.add_edge("ext_flow_task", "collect_result_task")
     workflow.add_edge("ext_rule_task", "collect_result_task")
     workflow.add_edge("ext_exception_task", "collect_result_task")
-
+    workflow.add_edge("collect_result_task", "save_task")
     # 结束
-    workflow.add_edge("collect_result_task", END)
+    workflow.add_edge("save_task", END)
 
     # 编译图
     graph = workflow.compile()
-
-    # 打印图结构
-    print("图结构:")
-    print(graph.get_graph().draw_mermaid())
 
     return graph
 

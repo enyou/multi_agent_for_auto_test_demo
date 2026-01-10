@@ -1,41 +1,16 @@
-from typing_extensions import Annotated, TypedDict, List, Dict, Optional, Any
+from typing import Annotated, TypedDict, List, Dict, Optional, Any
 
-from utils.tools import append_reducer
+from utils.tools import append_reducer, merge_dict_reducer
 
 
 class AgentStatus(TypedDict):
     """Agent Status"""
-    document_parser:str
+    document_parser: str
     test_case_generator: str
     test_code_generator: str
     code_executor: str
     report_agent: str
 
-
-class Requirement(TypedDict):
-    """
-     需求文档解析agent状态
-    """
-    feature: str
-    ext_features: Dict[str, str]
-    ext_apis: Annotated[List[Any], append_reducer]
-    ext_flows: Annotated[List[Any], append_reducer]
-    ext_rules: Annotated[List[Any], append_reducer]
-    ext_exceptions: Annotated[List[Any], append_reducer]
-
-
-class TestCase(TypedDict):
-    """
-    测试case生成的agent状态
-    """
-    case_id: str
-    title: str
-    type: str
-    preconditions: str
-    steps: List[str]
-    inputs: Dict[str, str]
-    expected_results: str
-    priority: str
 
 class TestCode(TypedDict):
     """
@@ -44,6 +19,7 @@ class TestCode(TypedDict):
     case_id: str
     test_code: str
     code_name: str
+
 
 class ExecutionResult(TypedDict):
     """
@@ -120,18 +96,19 @@ class RouterState(TypedDict):
 #         "bugs": []
 # }
 # ===============================
+
+
 class GlobalState(TypedDict):
     """
         global state 
     """
     # ===== Shared State（数据面）=====
     feature_id: str
-    fragment:str
-    requirements: Optional[Requirement]
-    trm_result: Optional[Dict[str, Any]]
-    test_cases: Optional[List[TestCase]]
-    test_code: Optional[List[TestCode]]
-    execution_result: Optional[List[ExecutionResult]]
+    fragment: str
+    doc_parser_result: Optional[Dict[str, Any]]
+    test_case_result: Optional[List[Any]]
+    test_code: Optional[List[Any]]
+    execution_result: Optional[List[Any]]
     report: Optional[Dict[str, Any]]
     bugs: Optional[List[Bug]]
 

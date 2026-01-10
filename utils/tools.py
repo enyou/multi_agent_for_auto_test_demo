@@ -22,3 +22,11 @@ def append_reducer(old_list: List[Any], new_items: Any) -> List[Any]:
     if old_list:
         return old_list + [new_items]
     return [new_items]
+
+
+def merge_dict_reducer(old: dict | None, new: dict | None) -> dict:
+    if old is None:
+        return new
+    merged = old.copy()
+    merged.update(new)
+    return merged

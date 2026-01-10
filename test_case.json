@@ -1,385 +1,363 @@
 [
     {
-        "case_id": "TC-F_4a300b9d-001",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-001",
+        "feature_id": "123",
         "feature": "用户登陆",
         "title": "用户登录主流程-成功登录",
         "type": "main_flow",
         "preconditions": "用户拥有有效的手机号和密码",
         "steps": [
             "打开登录页面",
-            "输入手机号和密码",
-            "点击登录按钮",
-            "系统验证手机号格式（11位数字）",
-            "系统验证密码格式（至少8位，包含数字与字母）",
-            "系统检查密码错误次数是否超过5次（未超过）",
-            "发送POST请求到/api/login接口",
-            "接收并验证响应"
+            "输入手机号与密码",
+            "提交登录请求",
+            "系统验证手机号格式",
+            "系统验证密码复杂度",
+            "系统检查密码错误次数",
+            "返回登录结果"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "pass1234"
         },
-        "expected_results": "系统验证成功，返回code为0，data中包含token",
+        "expected_results": "系统验证成功并返回访问令牌",
         "priority": "P0"
     },
     {
-        "case_id": "TC-F_4a300b9d-002",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-002",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "手机号规则-有效等价类（11位数字）",
+        "title": "手机号规则-等价类有效-11位数字",
         "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入符合规则的手机号和密码",
-            "点击登录按钮"
-        ],
-        "inputs": {
-            "phone": "13912345678",
-            "password": "pass1234"
-        },
-        "expected_results": "系统接受该手机号格式，进行后续验证",
-        "priority": "P1"
-    },
-    {
-        "case_id": "TC-F_4a300b9d-003",
-        "feature_id": "F_4a300b9d",
-        "feature": "用户登陆",
-        "title": "手机号规则-无效等价类（非11位）",
-        "type": "rule_equivalence",
-        "preconditions": "",
-        "steps": [
-            "打开登录页面",
-            "输入非11位的手机号和密码",
-            "点击登录按钮"
-        ],
-        "inputs": {
-            "phone": "1380013800",
-            "password": "pass1234"
-        },
-        "expected_results": "系统验证手机号格式失败，返回错误信息",
-        "priority": "P1"
-    },
-    {
-        "case_id": "TC-F_4a300b9d-004",
-        "feature_id": "F_4a300b9d",
-        "feature": "用户登陆",
-        "title": "手机号规则-无效等价类（包含非数字字符）",
-        "type": "rule_equivalence",
-        "preconditions": "",
-        "steps": [
-            "打开登录页面",
-            "输入包含非数字字符的手机号和密码",
-            "点击登录按钮"
-        ],
-        "inputs": {
-            "phone": "1380013800a",
-            "password": "pass1234"
-        },
-        "expected_results": "系统验证手机号格式失败，返回错误信息",
-        "priority": "P1"
-    },
-    {
-        "case_id": "TC-F_4a300b9d-005",
-        "feature_id": "F_4a300b9d",
-        "feature": "用户登陆",
-        "title": "手机号规则-边界值（长度=11）",
-        "type": "rule_boundary",
-        "preconditions": "",
-        "steps": [
-            "打开登录页面",
-            "输入长度为11的手机号和密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "pass1234"
         },
-        "expected_results": "系统接受该手机号格式，进行后续验证",
+        "expected_results": "系统验证手机号格式成功",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-006",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-003",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "手机号规则-边界值（长度=10）",
-        "type": "rule_boundary",
+        "title": "手机号规则-等价类无效-长度小于11位",
+        "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入长度为10的手机号和密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "1380013800",
             "password": "pass1234"
         },
-        "expected_results": "系统验证手机号格式失败，返回错误信息",
+        "expected_results": "系统验证手机号格式失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-007",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-004",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "手机号规则-边界值（长度=12）",
-        "type": "rule_boundary",
+        "title": "手机号规则-等价类无效-长度大于11位",
+        "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入长度为12的手机号和密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "138001380000",
             "password": "pass1234"
         },
-        "expected_results": "系统验证手机号格式失败，返回错误信息",
+        "expected_results": "系统验证手机号格式失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-008",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-005",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-有效等价类（至少8位，包含数字与字母）",
+        "title": "手机号规则-等价类无效-包含非数字字符",
         "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和符合规则的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
+        ],
+        "inputs": {
+            "phone": "1380013800a",
+            "password": "pass1234"
+        },
+        "expected_results": "系统验证手机号格式失败，返回相应错误提示",
+        "priority": "P1"
+    },
+    {
+        "case_id": "TC-F123-006",
+        "feature_id": "123",
+        "feature": "用户登陆",
+        "title": "手机号规则-边界值-长度为11位（下边界）",
+        "type": "rule_boundary",
+        "preconditions": "",
+        "steps": [
+            "打开登录页面",
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "pass1234"
         },
-        "expected_results": "系统接受该密码格式，进行后续验证",
+        "expected_results": "系统验证手机号格式成功",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-009",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-007",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-无效等价类（长度不足8位）",
+        "title": "手机号规则-边界值-长度为10位（无效边界）",
+        "type": "rule_boundary",
+        "preconditions": "",
+        "steps": [
+            "打开登录页面",
+            "输入手机号与密码",
+            "提交登录请求"
+        ],
+        "inputs": {
+            "phone": "1380013800",
+            "password": "pass1234"
+        },
+        "expected_results": "系统验证手机号格式失败，返回相应错误提示",
+        "priority": "P1"
+    },
+    {
+        "case_id": "TC-F123-008",
+        "feature_id": "123",
+        "feature": "用户登陆",
+        "title": "手机号规则-边界值-长度为12位（无效边界）",
+        "type": "rule_boundary",
+        "preconditions": "",
+        "steps": [
+            "打开登录页面",
+            "输入手机号与密码",
+            "提交登录请求"
+        ],
+        "inputs": {
+            "phone": "138001380000",
+            "password": "pass1234"
+        },
+        "expected_results": "系统验证手机号格式失败，返回相应错误提示",
+        "priority": "P1"
+    },
+    {
+        "case_id": "TC-F123-009",
+        "feature_id": "123",
+        "feature": "用户登陆",
+        "title": "密码规则-等价类有效-长度8位且包含数字和字母",
         "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和长度不足8位的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
+        ],
+        "inputs": {
+            "phone": "13800138000",
+            "password": "pass1234"
+        },
+        "expected_results": "系统验证密码复杂度成功",
+        "priority": "P1"
+    },
+    {
+        "case_id": "TC-F123-010",
+        "feature_id": "123",
+        "feature": "用户登陆",
+        "title": "密码规则-等价类无效-长度小于8位",
+        "type": "rule_equivalence",
+        "preconditions": "",
+        "steps": [
+            "打开登录页面",
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "pass123"
         },
-        "expected_results": "系统验证密码格式失败，返回错误信息",
+        "expected_results": "系统验证密码复杂度失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-010",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-011",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-无效等价类（仅包含数字）",
+        "title": "密码规则-等价类无效-仅包含数字",
         "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和仅包含数字的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "12345678"
         },
-        "expected_results": "系统验证密码格式失败，返回错误信息",
+        "expected_results": "系统验证密码复杂度失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-011",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-012",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-无效等价类（仅包含字母）",
+        "title": "密码规则-等价类无效-仅包含字母",
         "type": "rule_equivalence",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和仅包含字母的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "password"
         },
-        "expected_results": "系统验证密码格式失败，返回错误信息",
+        "expected_results": "系统验证密码复杂度失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-012",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-013",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-边界值（长度=8）",
+        "title": "密码规则-边界值-长度为8位（下边界）",
         "type": "rule_boundary",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和长度为8且包含数字与字母的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
-            "password": "pass1234"
+            "password": "pa123456"
         },
-        "expected_results": "系统接受该密码格式，进行后续验证",
+        "expected_results": "系统验证密码复杂度成功",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-013",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-014",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "密码规则-边界值（长度=7）",
+        "title": "密码规则-边界值-长度为7位（无效边界）",
         "type": "rule_boundary",
         "preconditions": "",
         "steps": [
             "打开登录页面",
-            "输入手机号和长度为7的密码",
-            "点击登录按钮"
+            "输入手机号与密码",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "pass123"
         },
-        "expected_results": "系统验证密码格式失败，返回错误信息",
+        "expected_results": "系统验证密码复杂度失败，返回相应错误提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-014",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-015",
+        "feature_id": "123",
         "feature": "用户登陆",
         "title": "账户锁定规则-连续登录失败5次后账户锁定10分钟",
-        "type": "sub_flow",
-        "preconditions": "账户密码错误次数为0",
+        "type": "rule_equivalence",
+        "preconditions": "账户初始密码错误次数为0",
         "steps": [
             "打开登录页面",
-            "使用正确的手机号和错误的密码连续尝试登录5次",
+            "输入正确的手机号和错误的密码",
+            "提交登录请求",
+            "重复步骤1-3，直到连续失败5次",
             "第6次尝试使用正确的手机号和正确的密码登录"
         ],
         "inputs": {
             "phone": "13800138000",
             "password": "wrongpass"
         },
-        "expected_results": "前5次登录失败，第6次登录时系统提示账户已锁定10分钟",
+        "expected_results": "前5次登录失败，第6次登录时系统提示账户已锁定10分钟，登录失败",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-015",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-016",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "API验证-参数合法性（有效参数）",
+        "title": "API参数验证-phone参数缺失",
         "type": "api_validation",
         "preconditions": "",
         "steps": [
-            "构造POST请求到/api/login",
-            "请求体包含有效的phone和password参数",
-            "发送请求"
-        ],
-        "inputs": {
-            "phone": "13800138000",
-            "password": "pass1234"
-        },
-        "expected_results": "接口返回code为0，data中包含token",
-        "priority": "P0"
-    },
-    {
-        "case_id": "TC-F_4a300b9d-016",
-        "feature_id": "F_4a300b9d",
-        "feature": "用户登陆",
-        "title": "API验证-参数缺失（缺少phone）",
-        "type": "api_validation",
-        "preconditions": "",
-        "steps": [
-            "构造POST请求到/api/login",
-            "请求体仅包含password参数",
-            "发送请求"
+            "构造登录请求",
+            "提交登录请求"
         ],
         "inputs": {
             "password": "pass1234"
         },
-        "expected_results": "接口返回错误码（如400），提示参数缺失或无效",
+        "expected_results": "系统返回参数缺失或格式错误的相关错误码和提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-017",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-017",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "API验证-参数缺失（缺少password）",
+        "title": "API参数验证-password参数缺失",
         "type": "api_validation",
         "preconditions": "",
         "steps": [
-            "构造POST请求到/api/login",
-            "请求体仅包含phone参数",
-            "发送请求"
+            "构造登录请求",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000"
         },
-        "expected_results": "接口返回错误码（如400），提示参数缺失或无效",
+        "expected_results": "系统返回参数缺失或格式错误的相关错误码和提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-018",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-018",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "API验证-参数格式错误（phone为非数字字符串）",
+        "title": "API参数验证-phone参数类型错误（非字符串）",
         "type": "api_validation",
         "preconditions": "",
         "steps": [
-            "构造POST请求到/api/login",
-            "请求体包含非数字phone和有效password",
-            "发送请求"
+            "构造登录请求",
+            "提交登录请求"
         ],
         "inputs": {
-            "phone": "1380013800a",
+            "phone": 13800138000,
             "password": "pass1234"
         },
-        "expected_results": "接口返回错误码（如401），提示Unauthorized或参数无效",
+        "expected_results": "系统返回参数类型错误的相关错误码和提示",
         "priority": "P1"
     },
     {
-        "case_id": "TC-F_4a300b9d-019",
-        "feature_id": "F_4a300b9d",
+        "case_id": "TC-F123-019",
+        "feature_id": "123",
         "feature": "用户登陆",
-        "title": "API验证-错误码/返回体异常（密码错误）",
+        "title": "API参数验证-password参数类型错误（非字符串）",
         "type": "api_validation",
         "preconditions": "",
         "steps": [
-            "构造POST请求到/api/login",
-            "请求体包含有效phone和错误password",
-            "发送请求"
+            "构造登录请求",
+            "提交登录请求"
         ],
         "inputs": {
             "phone": "13800138000",
-            "password": "wrongpass"
+            "password": 12345678
         },
-        "expected_results": "接口返回code为401，msg为Unauthorized",
-        "priority": "P1"
-    },
-    {
-        "case_id": "TC-F_4a300b9d-020",
-        "feature_id": "F_4a300b9d",
-        "feature": "用户登陆",
-        "title": "API验证-请求方法错误（使用GET请求）",
-        "type": "api_validation",
-        "preconditions": "",
-        "steps": [
-            "构造GET请求到/api/login",
-            "请求参数包含phone和password",
-            "发送请求"
-        ],
-        "inputs": {
-            "phone": "13800138000",
-            "password": "pass1234"
-        },
-        "expected_results": "接口返回错误码（如405），提示方法不允许",
+        "expected_results": "系统返回参数类型错误的相关错误码和提示",
         "priority": "P1"
     }
 ]

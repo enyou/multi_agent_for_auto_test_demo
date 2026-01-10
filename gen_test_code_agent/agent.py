@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Any, Dict, List, Optional, TypedDict
 from langgraph.graph import StateGraph, END, START
 from langchain_core.output_parsers import JsonOutputParser
 from state import GlobalState
@@ -9,12 +10,25 @@ from gen_test_code_agent import schemas
 from gen_test_code_agent.get_selector_from_html import run as extract_selectors
 
 
+class TestCode(TypedDict):
+    """
+        测试代码生成的agent状态
+    """
+    case_id: str
+    code_name: str
+    code_ref: str
+
 
 class GenTestCodeState(GlobalState):
     """状态定义"""
+    test_case_result: List[Any]
+    feature_id: str
+    url: str
+    test_case: Dict[str, Any]
     structured_test_case: str
     page_selector: str
     test_code: str
+    test_code_result: Optional[TestCode]
 
 
 def structuring_test_case_node(state: GenTestCodeState):
@@ -33,13 +47,13 @@ def structuring_test_case_node(state: GenTestCodeState):
     return {"structured_test_case": resp}
 
 
-def get_selectors_node(state: GenTestCodeState):
+def get_selectors_node(state: GlobalState):
     """从页面中提取选择器"""
     selectors = extract_selectors(url=state["url"])
     return {"page_selector": json.dumps(selectors)}
 
 
-def create_test_code_node(state: GenTestCodeState):
+def create_test_code_node(state: GlobalState):
     """生成测试代码"""
     resp = llm_client.run_prompt(system_prompt=UITestCaseToCodePrompt.system_prompt,
                                  user_prompt=UITestCaseToCodePrompt.user_prompt,
@@ -49,7 +63,7 @@ def create_test_code_node(state: GenTestCodeState):
     return {"test_code": resp.content}
 
 
-def save_node(state: GenTestCodeState):
+def save_node(state: GlobalState):
     """
     将代码字符串保存为Python文件
 
@@ -62,7 +76,7 @@ def save_node(state: GenTestCodeState):
     case_id = test_case_dict["case_id"]
     create_date = datetime.now().strftime("%Y%m%d%H%M%S")
     file_name = f"test_{case_id}_{create_date}.py"
-    full_path = "./test_codes/{}".format(file_name)
+    full_path = "./output/test_codes/{}".format(file_name)
     code = state["test_code"].replace(
         "```python", "").replace("```", "").strip()
     try:
@@ -75,7 +89,7 @@ def save_node(state: GenTestCodeState):
 
 def create_graph():
     """创建并运行简单的并行图"""
-    print("开始创建图")
+    print("-----生成测试代码图开始----")
     # 创建图
     workflow = StateGraph(GenTestCodeState)
 
@@ -94,9 +108,7 @@ def create_graph():
     # 编译图
     graph = workflow.compile()
 
-    # 打印图结构
-    print("图结构:")
-    print(graph.get_graph().draw_mermaid())
+    print("-----生成测试代码图结束----")
 
     return graph
 
@@ -120,5 +132,3 @@ def run_graph(test_case, url):
     final_state = graph.invoke(initial_state)
     print(final_state)
     print(final_state["test_case"])
-
-    

@@ -7,7 +7,9 @@ from requirement_analyzer_agent.agent import create_graph as trm_create_agent
 
 def trm_create_node(state: GlobalState):
     """需求解析节点"""
-    return trm_create_agent().invoke(state)
+    result = trm_create_agent().invoke({"feature_id": state["feature_id"],
+                                        "fragment": state["fragment"]})
+    return {"doc_parser_result": result}
 
 
 def test_case_create_node(state: GlobalState):
@@ -40,10 +42,6 @@ def create_graph():
     # 编译图
     graph = workflow.compile()
 
-    # 打印图结构
-    print("图结构:")
-    print(graph.get_graph().draw_mermaid())
-
     return graph
 
 
@@ -52,7 +50,7 @@ def run(user_input: str):
     执行工作流
     """
     print("=" * 50)
-  
+
     # 创建初始状态
     initial_state = {
         "feature_id": "123",
